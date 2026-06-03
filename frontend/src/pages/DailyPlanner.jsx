@@ -223,7 +223,7 @@ const DailyPlanner = () => {
                       {task.dueDate && (
                         <span className="text-[10px] text-gray-400 flex items-center gap-1">
                           <Calendar size={10} />
-                          {task.dueDate}
+                          {task.dueDate?.start || task.dueDate}
                         </span>
                       )}
                     </div>
