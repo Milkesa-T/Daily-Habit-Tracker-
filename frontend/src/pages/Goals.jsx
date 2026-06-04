@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Target, Plus, Calendar, Edit, Save, Compass, AlignLeft, ArrowRight, CheckCircle, Clock, Trash2 } from 'lucide-react';
+import { Target, Plus, Calendar, Edit, Save, Compass, AlignLeft, ArrowRight, CheckCircle, Clock, Trash2, Edit2 } from 'lucide-react';
 import api from '../services/api';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -38,6 +38,7 @@ const Goals = () => {
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingGoalId, setEditingGoalId] = useState(null);
 
   // Form state
   const [form, setForm] = useState({
@@ -49,7 +50,7 @@ const Goals = () => {
   });
 
   // Progress editing
-  const [editingId, setEditingId] = useState(null);
+  const [editingProgressId, setEditingProgressId] = useState(null);
   const [editProgress, setEditProgress] = useState(0);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -76,22 +77,48 @@ const Goals = () => {
         goalTitle:   form.goalTitle,
         category:    form.category,
         description: form.description,
-        startDate:   form.startDate  || null,
+        startDate:   form.startDate || null,
         targetDate:  form.targetDate || null,
-        progress:    0,
-        status:      'Not Started',
       };
-      const created = await api.createGoal(payload);
-      setGoals([created, ...goals]);
-      setForm({ goalTitle: '', category: 'Coding', description: '', startDate: '', targetDate: '' });
-      setShowAddForm(false);
+
+      if (editingGoalId) {
+        // Edit mode
+        const updated = await api.updateGoal(editingGoalId, payload);
+        setGoals(goals.map(g => g.id === editingGoalId ? { ...g, ...payload } : g));
+      } else {
+        // Create mode
+        payload.progress = 0;
+        payload.status = 'Not Started';
+        const created = await api.createGoal(payload);
+        setGoals([created, ...goals]);
+      }
+      resetForm();
     } catch (err) {
       console.error(err);
     }
   };
 
+  const resetForm = () => {
+    setForm({ goalTitle: '', category: 'Coding', description: '', startDate: '', targetDate: '' });
+    setEditingGoalId(null);
+    setShowAddForm(false);
+  };
+
+  const startEditGoal = (goal) => {
+    setForm({
+      goalTitle: goal.goalTitle || '',
+      category: goal.category || 'Coding',
+      description: goal.description || '',
+      startDate: goal.startDate?.start || goal.startDate || '',
+      targetDate: goal.targetDate?.start || goal.targetDate || '',
+    });
+    setEditingGoalId(goal.id);
+    setShowAddForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const startEditProgress = (goal) => {
-    setEditingId(goal.id);
+    setEditingProgressId(goal.id);
     setEditProgress(Math.round((goal.progress || 0) * 100));
   };
 
@@ -100,7 +127,7 @@ const Goals = () => {
       const floatProgress = editProgress / 100;
       const status = floatProgress === 1 ? 'Completed' : floatProgress > 0 ? 'In Progress' : 'Not Started';
       setGoals(goals.map(g => g.id === goal.id ? { ...g, progress: floatProgress, status } : g));
-      setEditingId(null);
+      setEditingProgressId(null);
       await api.updateGoal(goal.id, { progress: floatProgress, status });
     } catch (err) {
       console.error(err);
@@ -150,10 +177,10 @@ const Goals = () => {
         </button>
       </div>
 
-      {/* ─── Add Goal Form ─────────────────────────────────────────────────────── */}
+      {/* ─── Add/Edit Goal Form ─────────────────────────────────────────────────────── */}
       {showAddForm && (
         <form onSubmit={handleCreateGoal} className="glass p-6 rounded-2xl border border-white/10 space-y-4">
-          <h3 className="text-lg font-semibold text-white">New Milestone</h3>
+          <h3 className="text-lg font-semibold text-white">{editingGoalId ? 'Edit Milestone' : 'New Milestone'}</h3>
 
           {/* Title */}
           <div className="space-y-1">
@@ -226,13 +253,13 @@ const Goals = () => {
           </div>
 
           <div className="flex gap-3 justify-end pt-2">
-            <button type="button" onClick={() => setShowAddForm(false)}
+            <button type="button" onClick={resetForm}
               className="px-4 py-2 border border-white/10 text-gray-300 rounded-xl hover:bg-white/5 transition-colors text-sm font-semibold">
               Cancel
             </button>
             <button type="submit"
               className="px-4 py-2 bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-xl transition-colors text-sm font-semibold">
-              Save Goal
+              {editingGoalId ? 'Save Changes' : 'Save Goal'}
             </button>
           </div>
         </form>
@@ -274,13 +301,22 @@ const Goals = () => {
                         {goal.status || 'Not Started'}
                       </span>
                     </div>
-                    <button 
-                      onClick={() => handleDeleteGoal(goal.id)}
-                      className="text-gray-500 hover:text-red-400 transition-colors p-1"
-                      title="Delete Goal"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button 
+                        onClick={() => startEditGoal(goal)}
+                        className="text-gray-500 hover:text-[#3b82f6] transition-colors p-1"
+                        title="Edit Goal"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteGoal(goal.id)}
+                        className="text-gray-500 hover:text-red-400 transition-colors p-1"
+                        title="Delete Goal"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Title */}
@@ -330,7 +366,7 @@ const Goals = () => {
                 <div className="mt-6 space-y-3 pt-4 border-t border-white/5">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-semibold text-gray-400">Progress — {pct}%</span>
-                    {editingId === goal.id ? (
+                    {editingProgressId === goal.id ? (
                       <button onClick={() => saveProgress(goal)}
                         className="flex items-center gap-1 text-xs text-[#10b981] hover:underline font-semibold">
                         <Save size={12} /><span>Save</span>
@@ -343,7 +379,7 @@ const Goals = () => {
                     )}
                   </div>
 
-                  {editingId === goal.id ? (
+                  {editingProgressId === goal.id ? (
                     <div className="flex items-center gap-4">
                       <input type="range" min="0" max="100" value={editProgress}
                         onChange={e => setEditProgress(parseInt(e.target.value))}
