@@ -25,4 +25,17 @@ async function createDatabases() {
     });
     console.log(`✅ Tasks created! ID: ${tasksDb.id}`);
 
-    
+    // 2. Habits Database
+    console.log("Creating Habits database...");
+    const habitsDb = await notion.databases.create({
+      parent: { type: "page_id", page_id: pageId },
+      title: [{ type: "text", text: { content: "Habits" } }],
+      properties: {
+        "habitName": { title: {} },
+        "completed": { checkbox: {} },
+        "streak": { number: { format: "number" } },
+        "frequency": { select: { options: [{ name: "Daily" }, { name: "Weekly" }] } },
+        "category": { select: { options: [{ name: "Spiritual" }, { name: "Coding" }, { name: "English" }, { name: "Health" }] } }
+      }
+    });
+    console.log(`✅ Habits created! ID: ${habitsDb.id}`);
