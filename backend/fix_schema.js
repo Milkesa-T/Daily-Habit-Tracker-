@@ -37,3 +37,23 @@ const SCHEMA_ADDITIONS = {
     description: { rich_text: {} },
   },
 };
+
+async function addSchemaColumns() {
+  for (const [type, additions] of Object.entries(SCHEMA_ADDITIONS)) {
+    const dsId = DS_IDS[type];
+    if (!dsId) continue;
+    console.log(`Adding new columns to '${type}'...`);
+    try {
+      await notion.dataSources.update({
+        data_source_id: dsId,
+        properties: additions,
+      });
+      console.log(`✅ '${type}' updated successfully.`);
+    } catch (e) {
+      console.error(`❌ Failed to update '${type}':`, e.message);
+    }
+  }
+  console.log("\n🎉 Schema migration done!");
+}
+
+addSchemaColumns();
