@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
   CheckCircle, Calendar, Flame, Target, Plus, Compass,
-  Clock, X, ChevronDown, AlignLeft, Filter, Repeat, ArrowRight
+  Clock, X, ChevronDown, AlignLeft, Filter, Repeat, ArrowRight, Trash2, Activity
 } from 'lucide-react';
+import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import api from '../services/api';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -147,7 +148,7 @@ const HabitQuickAdd = ({ onAdd }) => {
 };
 
 // ─── Task Detail Modal ────────────────────────────────────────────────────────
-const TaskModal = ({ task, onClose, onUpdateStatus }) => {
+const TaskModal = ({ task, onClose, onUpdateStatus, onDeleteTask }) => {
   const dateRange = task.dueDate;
   const startDate = dateRange?.start || dateRange;
   const endDate = dateRange?.end;
@@ -217,6 +218,10 @@ const TaskModal = ({ task, onClose, onUpdateStatus }) => {
           <button onClick={() => { onUpdateStatus(task.id, 'Done'); onClose(); }}
             className="flex-1 py-2.5 bg-green-500/15 text-green-400 hover:bg-green-500/25 rounded-xl font-semibold transition-colors text-sm border border-green-500/20">
             Mark Done ✓
+          </button>
+          <button onClick={() => { if(window.confirm('Delete this task?')){ onDeleteTask(task.id); onClose(); } }}
+            className="flex-none p-2.5 bg-red-500/15 text-red-400 hover:bg-red-500/25 rounded-xl transition-colors border border-red-500/20" title="Delete Task">
+            <Trash2 size={20} />
           </button>
         </div>
       </div>
@@ -293,6 +298,29 @@ const Dashboard = () => {
     catch (err) { console.error(err); }
   };
 
+  const deleteTask = async (id) => {
+    try {
+      await api.deleteTask(id);
+      setTasks(prev => prev.filter(t => t.id !== id));
+    } catch (err) { console.error(err); }
+  };
+
+  const deleteHabit = async (id) => {
+    if (!window.confirm("Delete this habit?")) return;
+    try {
+      await api.deleteHabit(id);
+      setHabits(prev => prev.filter(h => h.id !== id));
+    } catch (err) { console.error(err); }
+  };
+
+  const deleteProject = async (id) => {
+    if (!window.confirm("Delete this project?")) return;
+    try {
+      await api.deleteProject(id);
+      setProjects(prev => prev.filter(p => p.id !== id));
+    } catch (err) { console.error(err); }
+  };
+
   const getGreeting = () => {
     const h = new Date().getHours();
     return h < 12 ? 'Good Morning, Engineer' : h < 18 ? 'Good Afternoon, Engineer' : 'Good Evening, Engineer';
@@ -332,7 +360,7 @@ const Dashboard = () => {
 
       {/* Task Detail Modal */}
       {selectedTask && (
-        <TaskModal task={selectedTask} onClose={() => setSelectedTask(null)} onUpdateStatus={updateTaskStatus} />
+        <TaskModal task={selectedTask} onClose={() => setSelectedTask(null)} onUpdateStatus={updateTaskStatus} onDeleteTask={deleteTask} />
       )}
 
       {/* Welcome Panel */}
@@ -408,7 +436,15 @@ const Dashboard = () => {
 
           <div className="space-y-2.5">
             {filteredTasks.length === 0
-              ? <p className="text-xs text-gray-500 text-center py-4">No {taskFilter !== 'All' ? taskFilter.toLowerCase() : ''} tasks. Add one! 🎯</p>
+              ? (
+                <div className="flex flex-col items-center justify-center p-6 bg-white/2 border border-white/5 rounded-2xl">
+                  <div className="w-12 h-12 bg-[#3b82f6]/10 rounded-full flex items-center justify-center mb-3">
+                    <CheckCircle className="text-[#3b82f6]" size={24} />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-200">All caught up!</p>
+                  <p className="text-xs text-gray-500 mt-1">No {taskFilter !== 'All' ? taskFilter.toLowerCase() : ''} tasks pending.</p>
+                </div>
+              )
               : filteredTasks.slice(0, 5).map(task => (
               <div key={task.id} onClick={() => setSelectedTask(task)}
                 className="flex flex-col p-3 bg-white/2 hover:bg-white/[0.06] border border-white/5 rounded-xl transition-all cursor-pointer group">
@@ -453,7 +489,15 @@ const Dashboard = () => {
 
           <div className="space-y-2">
             {habits.length === 0
-              ? <p className="text-xs text-gray-500 text-center py-4">No habits yet. Seed your routines! 🌱</p>
+              ? (
+                <div className="flex flex-col items-center justify-center p-6 bg-white/2 border border-white/5 rounded-2xl mt-4">
+                  <div className="w-12 h-12 bg-[#10b981]/10 rounded-full flex items-center justify-center mb-3">
+                    <Activity className="text-[#10b981]" size={24} />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-200">No routines yet</p>
+                  <p className="text-xs text-gray-500 mt-1 text-center">Start tracking daily habits.</p>
+                </div>
+              )
               : habits.map(habit => (
               <div key={habit.id}
                 className={`flex flex-col p-3 border rounded-xl transition-all ${
@@ -471,6 +515,13 @@ const Dashboard = () => {
                   <div className="flex items-center gap-1 text-xs text-gray-400 shrink-0">
                     <Flame size={13} className="text-orange-500" />
                     <span className="font-semibold">{habit.streak || 0}</span>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); deleteHabit(habit.id); }}
+                      className="ml-2 text-gray-500 hover:text-red-400 transition-colors p-1"
+                      title="Delete Habit"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
                 {/* Time range for habit */}
@@ -487,30 +538,63 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* ── Projects Column ── */}
-        <div className="glass p-6 rounded-2xl space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-white">Active Projects</h3>
-            <span className="text-xs text-gray-400 font-semibold">{projectProgress}% avg</span>
-          </div>
-          <div className="space-y-4">
-            {projects.length === 0
-              ? <p className="text-xs text-gray-500 text-center py-4">No projects yet.</p>
-              : projects.slice(0, 4).map(project => (
-              <div key={project.id} className="space-y-2 p-3 bg-white/2 border border-white/5 rounded-xl">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-sm font-semibold text-gray-200">{project.projectName}</h4>
-                  <span className="text-xs text-[#3b82f6] font-medium">{project.status || 'Building'}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-white/10 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-[#3b82f6] h-full rounded-full transition-all duration-500"
-                      style={{ width: `${(project.progress || 0) * 100}%` }} />
+        {/* ── Projects Column & Chart ── */}
+        <div className="flex flex-col gap-6">
+          {/* Projects */}
+          <div className="glass p-6 rounded-2xl space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-white">Active Projects</h3>
+              <span className="text-xs text-gray-400 font-semibold">{projectProgress}% avg</span>
+            </div>
+            <div className="space-y-4">
+              {projects.length === 0
+                ? <p className="text-xs text-gray-500 text-center py-4">No projects yet.</p>
+                : projects.slice(0, 4).map(project => (
+                <div key={project.id} className="space-y-2 p-3 bg-white/2 border border-white/5 rounded-xl">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-sm font-semibold text-gray-200">{project.projectName}</h4>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-[#3b82f6] font-medium">{project.status || 'Building'}</span>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); deleteProject(project.id); }}
+                        className="text-gray-500 hover:text-red-400 transition-colors p-1"
+                        title="Delete Project"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
-                  <span className="text-xs font-semibold text-gray-400">{Math.round((project.progress || 0) * 100)}%</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-white/10 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-[#3b82f6] h-full rounded-full transition-all duration-500"
+                        style={{ width: `${(project.progress || 0) * 100}%` }} />
+                    </div>
+                    <span className="text-xs font-semibold text-gray-400">{Math.round((project.progress || 0) * 100)}%</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+
+          {/* Habit Streaks Chart */}
+          <div className="glass p-6 rounded-2xl flex-1 flex flex-col">
+            <h3 className="text-lg font-semibold text-white mb-4">Top Streaks</h3>
+            <div className="flex-1 min-h-[150px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={habits.slice(0, 5).map(h => ({ name: h.habitName.split(' ')[0], streak: h.streak || 0 }))}>
+                  <XAxis dataKey="name" stroke="#6b7280" fontSize={10} tickLine={false} axisLine={false} />
+                  <Tooltip 
+                    cursor={{fill: 'rgba(255,255,255,0.05)'}} 
+                    contentStyle={{ backgroundColor: '#1f2937', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px' }}
+                  />
+                  <Bar dataKey="streak" radius={[4, 4, 0, 0]}>
+                    {habits.slice(0, 5).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={index === 0 ? '#10b981' : '#3b82f6'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
