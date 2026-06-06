@@ -5,16 +5,23 @@ require('dotenv').config();
 // The Calendar ID provided by the user
 const CALENDAR_ID = '1fb65402aaf576973b5912476e879885df0d6cdb0e46f98140800c860a2ee1ac@group.calendar.google.com';
 
-// Path to the service account credentials
-const KEY_PATH = path.join(__dirname, 'google_credentials.json');
-
 let calendar;
 
 try {
-  const auth = new google.auth.GoogleAuth({
-    keyFile: KEY_PATH,
-    scopes: ['https://www.googleapis.com/auth/calendar.events'],
-  });
+  let auth;
+  if (process.env.GOOGLE_CREDENTIALS) {
+    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+    auth = new google.auth.GoogleAuth({
+      credentials,
+      scopes: ['https://www.googleapis.com/auth/calendar.events'],
+    });
+  } else {
+    const KEY_PATH = path.join(__dirname, 'google_credentials.json');
+    auth = new google.auth.GoogleAuth({
+      keyFile: KEY_PATH,
+      scopes: ['https://www.googleapis.com/auth/calendar.events'],
+    });
+  }
 
   calendar = google.calendar({ version: 'v3', auth });
   console.log('Google Calendar API initialized.');
