@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Flame, Plus, Check, Undo, Sparkles, Compass, Trash2, Edit2, Activity } from 'lucide-react';
+import { Flame, Plus, Check, Undo, Sparkles, Compass, Trash2, Edit2, Activity, Clock } from 'lucide-react';
 import api from '../services/api';
 
 const HabitTracker = () => {
@@ -10,6 +10,8 @@ const HabitTracker = () => {
   const [habitName, setHabitName] = useState('');
   const [category, setCategory] = useState('Coding');
   const [frequency, setFrequency] = useState('Daily');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
@@ -34,8 +36,8 @@ const HabitTracker = () => {
     try {
       if (editingId) {
         // Edit mode
-        const updated = await api.updateHabit(editingId, { habitName, category, frequency });
-        setHabits(habits.map(h => h.id === editingId ? { ...h, habitName, category, frequency } : h));
+        const updated = await api.updateHabit(editingId, { habitName, category, frequency, startTime, endTime });
+        setHabits(habits.map(h => h.id === editingId ? { ...h, habitName, category, frequency, startTime, endTime } : h));
       } else {
         // Create mode
         const created = await api.createHabit({
@@ -43,7 +45,9 @@ const HabitTracker = () => {
           completed: false,
           streak: 0,
           frequency,
-          category
+          category,
+          startTime,
+          endTime
         });
         setHabits([created, ...habits]);
       }
@@ -57,6 +61,8 @@ const HabitTracker = () => {
     setHabitName('');
     setCategory('Coding');
     setFrequency('Daily');
+    setStartTime('');
+    setEndTime('');
     setEditingId(null);
     setShowAddForm(false);
   };
@@ -65,6 +71,8 @@ const HabitTracker = () => {
     setHabitName(habit.habitName);
     setCategory(habit.category || 'Coding');
     setFrequency(habit.frequency || 'Daily');
+    setStartTime(habit.startTime || '');
+    setEndTime(habit.endTime || '');
     setEditingId(habit.id);
     setShowAddForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -170,6 +178,27 @@ const HabitTracker = () => {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs text-gray-400 font-semibold uppercase">Start Time</label>
+              <input 
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="w-full bg-[#0b0c10] border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[#3b82f6]"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-400 font-semibold uppercase">End Time</label>
+              <input 
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="w-full bg-[#0b0c10] border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[#3b82f6]"
+              />
+            </div>
+          </div>
+
           <div className="flex gap-3 justify-end pt-2">
             <button 
               type="button" 
@@ -239,6 +268,12 @@ const HabitTracker = () => {
               <h3 className={`text-base font-semibold leading-tight ${habit.completed ? 'text-[#10b981] line-through' : 'text-white'}`}>
                 {habit.habitName}
               </h3>
+              {habit.startTime && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-1">
+                  <Clock size={13} className="text-[#10b981]" />
+                  <span>{habit.startTime}{habit.endTime ? ` → ${habit.endTime}` : ''}</span>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-4">

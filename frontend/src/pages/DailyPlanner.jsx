@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Check, ArrowRight, ArrowLeft, Trash2, Calendar, Compass } from 'lucide-react';
+import { Plus, Check, ArrowRight, ArrowLeft, Trash2, Calendar, Compass, Clock } from 'lucide-react';
 import api from '../services/api';
 
 const DailyPlanner = () => {
@@ -12,6 +12,8 @@ const DailyPlanner = () => {
   const [priority, setPriority] = useState('Medium');
   const [category, setCategory] = useState('Projects');
   const [dueDate, setDueDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
 
   useEffect(() => {
     loadTasks();
@@ -39,11 +41,15 @@ const DailyPlanner = () => {
         priority,
         category,
         dueDate,
+        startTime,
+        endTime,
         completed: false
       });
       setTasks([created, ...tasks]);
       setTitle('');
       setDueDate('');
+      setStartTime('');
+      setEndTime('');
       setShowAddForm(false);
     } catch (err) {
       console.error(err);
@@ -149,6 +155,27 @@ const DailyPlanner = () => {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs text-gray-400 font-semibold uppercase">Start Time</label>
+              <input 
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="w-full bg-[#0b0c10] border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[#3b82f6]"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-400 font-semibold uppercase">End Time</label>
+              <input 
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="w-full bg-[#0b0c10] border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[#3b82f6]"
+              />
+            </div>
+          </div>
+
           <div className="space-y-1">
             <label className="text-xs text-gray-400 font-semibold uppercase">Due Date</label>
             <input 
@@ -162,7 +189,11 @@ const DailyPlanner = () => {
           <div className="flex gap-3 justify-end pt-2">
             <button 
               type="button" 
-              onClick={() => setShowAddForm(false)}
+              onClick={() => {
+                setStartTime('');
+                setEndTime('');
+                setShowAddForm(false);
+              }}
               className="px-4 py-2 border border-white/10 text-gray-300 rounded-xl hover:bg-white/5 transition-colors text-sm font-semibold"
             >
               Cancel
@@ -224,6 +255,12 @@ const DailyPlanner = () => {
                         <span className="text-[10px] text-gray-400 flex items-center gap-1">
                           <Calendar size={10} />
                           {task.dueDate?.start || task.dueDate}
+                        </span>
+                      )}
+                      {task.startTime && (
+                        <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                          <Clock size={10} className="text-[#3b82f6]" />
+                          {task.startTime}{task.endTime ? ` → ${task.endTime}` : ''}
                         </span>
                       )}
                     </div>
