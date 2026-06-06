@@ -1,5 +1,5 @@
-require('dotenv').config();
-const { Client } = require('@notionhq/client');
+require("dotenv").config();
+const { Client } = require("@notionhq/client");
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 const pageId = process.env.NOTION_PAGE_ID;
@@ -14,14 +14,53 @@ async function createDatabases() {
       parent: { type: "page_id", page_id: pageId },
       title: [{ type: "text", text: { content: "Tasks" } }],
       properties: {
-        "title": { title: {} }, // title property is required
-        "status": { select: { options: [{ name: "Todo", color: "gray" }, { name: "Doing", color: "blue" }, { name: "Done", color: "green" }] } },
-        "priority": { select: { options: [{ name: "Low", color: "green" }, { name: "Medium", color: "yellow" }, { name: "High", color: "red" }] } },
-        "category": { select: { options: [{ name: "English" }, { name: "Internship" }, { name: "Projects" }, { name: "Cybersecurity" }, { name: "CP" }, { name: "Forex" }, { name: "Spiritual" }, { name: "Reading" }, { name: "Career" }] } },
-        "dueDate": { date: {} },
-        "phase": { select: { options: [{ name: "Phase 1" }, { name: "Phase 2" }, { name: "Phase 3" }, { name: "Phase 4" }] } },
-        "completed": { checkbox: {} }
-      }
+        title: { title: {} }, // title property is required
+        status: {
+          select: {
+            options: [
+              { name: "Todo", color: "gray" },
+              { name: "Doing", color: "blue" },
+              { name: "Done", color: "green" },
+            ],
+          },
+        },
+        priority: {
+          select: {
+            options: [
+              { name: "Low", color: "green" },
+              { name: "Medium", color: "yellow" },
+              { name: "High", color: "red" },
+            ],
+          },
+        },
+        category: {
+          select: {
+            options: [
+              { name: "English" },
+              { name: "Internship" },
+              { name: "Projects" },
+              { name: "Cybersecurity" },
+              { name: "CP" },
+              { name: "Forex" },
+              { name: "Spiritual" },
+              { name: "Reading" },
+              { name: "Career" },
+            ],
+          },
+        },
+        dueDate: { date: {} },
+        phase: {
+          select: {
+            options: [
+              { name: "Phase 1" },
+              { name: "Phase 2" },
+              { name: "Phase 3" },
+              { name: "Phase 4" },
+            ],
+          },
+        },
+        completed: { checkbox: {} },
+      },
     });
     console.log(`✅ Tasks created! ID: ${tasksDb.id}`);
 
@@ -31,12 +70,23 @@ async function createDatabases() {
       parent: { type: "page_id", page_id: pageId },
       title: [{ type: "text", text: { content: "Habits" } }],
       properties: {
-        "habitName": { title: {} },
-        "completed": { checkbox: {} },
-        "streak": { number: { format: "number" } },
-        "frequency": { select: { options: [{ name: "Daily" }, { name: "Weekly" }] } },
-        "category": { select: { options: [{ name: "Spiritual" }, { name: "Coding" }, { name: "English" }, { name: "Health" }] } }
-      }
+        habitName: { title: {} },
+        completed: { checkbox: {} },
+        streak: { number: { format: "number" } },
+        frequency: {
+          select: { options: [{ name: "Daily" }, { name: "Weekly" }] },
+        },
+        category: {
+          select: {
+            options: [
+              { name: "Spiritual" },
+              { name: "Coding" },
+              { name: "English" },
+              { name: "Health" },
+            ],
+          },
+        },
+      },
     });
     console.log(`✅ Habits created! ID: ${habitsDb.id}`);
     // 3. Goals Database
@@ -45,14 +95,32 @@ async function createDatabases() {
       parent: { type: "page_id", page_id: pageId },
       title: [{ type: "text", text: { content: "Goals" } }],
       properties: {
-        "goalTitle": { title: {} },
-        "category": { select: { options: [{ name: "Spiritual" }, { name: "Coding" }, { name: "English" }, { name: "Career" }, { name: "Finance" }] } },
-        "targetDate": { date: {} },
-        "progress": { number: { format: "percent" } },
-        "status": { select: { options: [{ name: "Not Started", color: "gray" }, { name: "In Progress", color: "blue" }, { name: "Completed", color: "green" }] } }
-      }
+        goalTitle: { title: {} },
+        category: {
+          select: {
+            options: [
+              { name: "Spiritual" },
+              { name: "Coding" },
+              { name: "English" },
+              { name: "Career" },
+              { name: "Finance" },
+            ],
+          },
+        },
+        targetDate: { date: {} },
+        progress: { number: { format: "percent" } },
+        status: {
+          select: {
+            options: [
+              { name: "Not Started", color: "gray" },
+              { name: "In Progress", color: "blue" },
+              { name: "Completed", color: "green" },
+            ],
+          },
+        },
+      },
     });
-    console.log(✅ Goals created! ID: ${goalsDb.id});
+    console.log(`✅ Goals created! ID: ${goalsDb.id}`);
 
     // 4. Projects Database
     console.log("Creating Projects database...");
@@ -60,46 +128,80 @@ async function createDatabases() {
       parent: { type: "page_id", page_id: pageId },
       title: [{ type: "text", text: { content: "Projects" } }],
       properties: {
-        "projectName": { title: {} },
-        "status": { select: { options: [{ name: "Planning", color: "gray" }, { name: "Building", color: "blue" }, { name: "Debugging", color: "yellow" }, { name: "Completed", color: "green" }] } },
-        "stack": { multi_select: { options: [{ name: "React" }, { name: "Node.js" }, { name: "Python" }] } },
-        "githubLink": { url: {} },
-        "progress": { number: { format: "percent" } },
-        "notes": { rich_text: {} }
-      }
+        projectName: { title: {} },
+        status: {
+          select: {
+            options: [
+              { name: "Planning", color: "gray" },
+              { name: "Building", color: "blue" },
+              { name: "Debugging", color: "yellow" },
+              { name: "Completed", color: "green" },
+            ],
+          },
+        },
+        stack: {
+          multi_select: {
+            options: [
+              { name: "React" },
+              { name: "Node.js" },
+              { name: "Python" },
+            ],
+          },
+        },
+        githubLink: { url: {} },
+        progress: { number: { format: "percent" } },
+        notes: { rich_text: {} },
+      },
     });
-    console.log(✅ Projects created! ID: ${projectsDb.id});
+    console.log(`✅ Projects created! ID: ${projectsDb.id}`);
 
-     // 5. English Database
+    // 5. English Database
     console.log("Creating English database...");
     const englishDb = await notion.databases.create({
       parent: { type: "page_id", page_id: pageId },
       title: [{ type: "text", text: { content: "English" } }],
       properties: {
-        "word": { title: {} },
-        "meaning": { rich_text: {} },
-        "exampleSentence": { rich_text: {} },
-        "masteryStatus": { select: { options: [{ name: "Learning", color: "red" }, { name: "Remembered", color: "yellow" }, { name: "Mastered", color: "green" }] } }
-      }
+        word: { title: {} },
+        meaning: { rich_text: {} },
+        exampleSentence: { rich_text: {} },
+        masteryStatus: {
+          select: {
+            options: [
+              { name: "Learning", color: "red" },
+              { name: "Remembered", color: "yellow" },
+              { name: "Mastered", color: "green" },
+            ],
+          },
+        },
+      },
     });
-    console.log(✅ English created! ID: ${englishDb.id});
+    console.log(`✅ English created! ID: ${englishDb.id}`);
+
     // 6. Journal Database
     console.log("Creating Journal database...");
     const journalDb = await notion.databases.create({
       parent: { type: "page_id", page_id: pageId },
       title: [{ type: "text", text: { content: "Journal" } }],
       properties: {
-        "title": { title: {} },
-        "date": { date: {} },
-        "reflection": { rich_text: {} },
-        "mood": { select: { options: [{ name: "Great", color: "green" }, { name: "Good", color: "blue" }, { name: "Okay", color: "yellow" }, { name: "Bad", color: "red" }] } },
-        "lessons": { rich_text: {} }
-      }
+        title: { title: {} },
+        date: { date: {} },
+        reflection: { rich_text: {} },
+        mood: {
+          select: {
+            options: [
+              { name: "Great", color: "green" },
+              { name: "Good", color: "blue" },
+              { name: "Okay", color: "yellow" },
+              { name: "Bad", color: "red" },
+            ],
+          },
+        },
+        lessons: { rich_text: {} },
+      },
     });
-    console.log(✅ Journal created! ID: ${journalDb.id});
+    console.log(`✅ Journal created! ID: ${journalDb.id}`);
 
     console.log("\n🎉 All 6 databases created successfully!");
-
   } catch (error) {
     console.error("❌ Error creating databases:");
     console.error(error.message);
