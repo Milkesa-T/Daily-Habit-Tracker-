@@ -69,7 +69,7 @@ async function createDatabases() {
       }
     });
     console.log(✅ Projects created! ID: ${projectsDb.id});
-    
+
      // 5. English Database
     console.log("Creating English database...");
     const englishDb = await notion.databases.create({
@@ -83,3 +83,27 @@ async function createDatabases() {
       }
     });
     console.log(✅ English created! ID: ${englishDb.id});
+    // 6. Journal Database
+    console.log("Creating Journal database...");
+    const journalDb = await notion.databases.create({
+      parent: { type: "page_id", page_id: pageId },
+      title: [{ type: "text", text: { content: "Journal" } }],
+      properties: {
+        "title": { title: {} },
+        "date": { date: {} },
+        "reflection": { rich_text: {} },
+        "mood": { select: { options: [{ name: "Great", color: "green" }, { name: "Good", color: "blue" }, { name: "Okay", color: "yellow" }, { name: "Bad", color: "red" }] } },
+        "lessons": { rich_text: {} }
+      }
+    });
+    console.log(✅ Journal created! ID: ${journalDb.id});
+
+    console.log("\n🎉 All 6 databases created successfully!");
+
+  } catch (error) {
+    console.error("❌ Error creating databases:");
+    console.error(error.message);
+  }
+}
+
+createDatabases();
