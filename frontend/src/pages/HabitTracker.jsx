@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Flame, Plus, Check, Undo, Sparkles, Compass, Trash2 } from 'lucide-react';
+import { Flame, Plus, Check, Undo, Sparkles, Compass, Trash2, Edit2, Activity } from 'lucide-react';
 import api from '../services/api';
 
 const HabitTracker = () => {
@@ -7,10 +7,10 @@ const HabitTracker = () => {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
 
-  // New habit form
   const [habitName, setHabitName] = useState('');
   const [category, setCategory] = useState('Coding');
   const [frequency, setFrequency] = useState('Daily');
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     loadHabits();
@@ -32,19 +32,42 @@ const HabitTracker = () => {
     e.preventDefault();
     if (!habitName) return;
     try {
-      const created = await api.createHabit({
-        habitName,
-        completed: false,
-        streak: 0,
-        frequency,
-        category
-      });
-      setHabits([created, ...habits]);
-      setHabitName('');
-      setShowAddForm(false);
+      if (editingId) {
+        // Edit mode
+        const updated = await api.updateHabit(editingId, { habitName, category, frequency });
+        setHabits(habits.map(h => h.id === editingId ? { ...h, habitName, category, frequency } : h));
+      } else {
+        // Create mode
+        const created = await api.createHabit({
+          habitName,
+          completed: false,
+          streak: 0,
+          frequency,
+          category
+        });
+        setHabits([created, ...habits]);
+      }
+      resetForm();
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const resetForm = () => {
+    setHabitName('');
+    setCategory('Coding');
+    setFrequency('Daily');
+    setEditingId(null);
+    setShowAddForm(false);
+  };
+
+  const startEdit = (habit) => {
+    setHabitName(habit.habitName);
+    setCategory(habit.category || 'Coding');
+    setFrequency(habit.frequency || 'Daily');
+    setEditingId(habit.id);
+    setShowAddForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleToggleHabit = async (habit) => {
@@ -105,7 +128,7 @@ const HabitTracker = () => {
 
       {showAddForm && (
         <form onSubmit={handleCreateHabit} className="glass p-6 rounded-2xl border border-white/10 space-y-4 max-w-lg">
-          <h3 className="text-lg font-semibold text-white">Create New Habit</h3>
+          <h3 className="text-lg font-semibold text-white">{editingId ? 'Edit Habit' : 'Create New Habit'}</h3>
           
           <div className="space-y-1">
             <label className="text-xs text-gray-400 font-semibold uppercase">Habit Title</label>
@@ -150,7 +173,7 @@ const HabitTracker = () => {
           <div className="flex gap-3 justify-end pt-2">
             <button 
               type="button" 
-              onClick={() => setShowAddForm(false)}
+              onClick={resetForm}
               className="px-4 py-2 border border-white/10 text-gray-300 rounded-xl hover:bg-white/5 transition-colors text-sm font-semibold"
             >
               Cancel
@@ -159,13 +182,20 @@ const HabitTracker = () => {
               type="submit" 
               className="px-4 py-2 bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-xl transition-colors text-sm font-semibold"
             >
-              Create
+              {editingId ? 'Save Changes' : 'Create'}
             </button>
           </div>
         </form>
       )}
 
       {/* Grid of habits */}
+      {habits.length === 0 ? (
+        <div className="glass p-12 rounded-2xl text-center border border-white/5 mt-8 max-w-2xl mx-auto">
+          <Activity className="mx-auto text-gray-600 mb-3" size={40} />
+          <p className="text-gray-400 font-semibold">No habits tracked yet</p>
+          <p className="text-gray-600 text-sm mt-1">Add your daily or weekly routines to build consistency.</p>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {habits.map(habit => (
           <div 
@@ -189,13 +219,22 @@ const HabitTracker = () => {
                   </span>
                   <span className="text-xs text-gray-400 font-semibold">{habit.frequency}</span>
                 </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleDeleteHabit(habit.id); }}
-                  className="text-gray-500 hover:text-red-400 transition-colors p-1"
-                  title="Delete Habit"
-                >
-                  <Trash2 size={16} />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); startEdit(habit); }}
+                    className="text-gray-500 hover:text-[#3b82f6] transition-colors p-1"
+                    title="Edit Habit"
+                  >
+                    <Edit2 size={15} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeleteHabit(habit.id); }}
+                    className="text-gray-500 hover:text-red-400 transition-colors p-1"
+                    title="Delete Habit"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
               <h3 className={`text-base font-semibold leading-tight ${habit.completed ? 'text-[#10b981] line-through' : 'text-white'}`}>
                 {habit.habitName}
@@ -222,6 +261,7 @@ const HabitTracker = () => {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 };

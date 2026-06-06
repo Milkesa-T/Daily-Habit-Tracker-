@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --bg-main: #0b0c10;
+  --bg-card: rgba(30, 32, 40, 0.6);
+  --border-card: rgba(255, 255, 255, 0.08);
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Glassmorphism custom classes */
+.glass {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-card);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-hover:hover {
+  background: rgba(40, 42, 54, 0.8);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Color codes */
+.color-spiritual { color: #10b981; border-color: rgba(16, 185, 129, 0.3); background-color: rgba(16, 185, 129, 0.1); }
+.color-english { color: #f59e0b; border-color: rgba(245, 158, 11, 0.3); background-color: rgba(245, 158, 11, 0.1); }
+.color-coding { color: #3b82f6; border-color: rgba(59, 130, 246, 0.3); background-color: rgba(59, 130, 246, 0.1); }
+.color-career { color: #8b5cf6; border-color: rgba(139, 92, 246, 0.3); background-color: rgba(139, 92, 246, 0.1); }
+.color-forex { color: #f97316; border-color: rgba(249, 115, 22, 0.3); background-color: rgba(249, 115, 22, 0.1); }
+
+/* Hide default scrollbars for clean UI */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
