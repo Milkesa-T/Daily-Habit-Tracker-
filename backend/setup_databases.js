@@ -53,3 +53,19 @@ async function createDatabases() {
       }
     });
     console.log(✅ Goals created! ID: ${goalsDb.id});
+
+    // 4. Projects Database
+    console.log("Creating Projects database...");
+    const projectsDb = await notion.databases.create({
+      parent: { type: "page_id", page_id: pageId },
+      title: [{ type: "text", text: { content: "Projects" } }],
+      properties: {
+        "projectName": { title: {} },
+        "status": { select: { options: [{ name: "Planning", color: "gray" }, { name: "Building", color: "blue" }, { name: "Debugging", color: "yellow" }, { name: "Completed", color: "green" }] } },
+        "stack": { multi_select: { options: [{ name: "React" }, { name: "Node.js" }, { name: "Python" }] } },
+        "githubLink": { url: {} },
+        "progress": { number: { format: "percent" } },
+        "notes": { rich_text: {} }
+      }
+    });
+    console.log(✅ Projects created! ID: ${projectsDb.id});
