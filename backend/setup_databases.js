@@ -69,3 +69,17 @@ async function createDatabases() {
       }
     });
     console.log(✅ Projects created! ID: ${projectsDb.id});
+    
+     // 5. English Database
+    console.log("Creating English database...");
+    const englishDb = await notion.databases.create({
+      parent: { type: "page_id", page_id: pageId },
+      title: [{ type: "text", text: { content: "English" } }],
+      properties: {
+        "word": { title: {} },
+        "meaning": { rich_text: {} },
+        "exampleSentence": { rich_text: {} },
+        "masteryStatus": { select: { options: [{ name: "Learning", color: "red" }, { name: "Remembered", color: "yellow" }, { name: "Mastered", color: "green" }] } }
+      }
+    });
+    console.log(✅ English created! ID: ${englishDb.id});
