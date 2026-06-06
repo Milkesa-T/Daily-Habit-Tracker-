@@ -39,3 +39,17 @@ async function createDatabases() {
       }
     });
     console.log(`✅ Habits created! ID: ${habitsDb.id}`);
+    // 3. Goals Database
+    console.log("Creating Goals database...");
+    const goalsDb = await notion.databases.create({
+      parent: { type: "page_id", page_id: pageId },
+      title: [{ type: "text", text: { content: "Goals" } }],
+      properties: {
+        "goalTitle": { title: {} },
+        "category": { select: { options: [{ name: "Spiritual" }, { name: "Coding" }, { name: "English" }, { name: "Career" }, { name: "Finance" }] } },
+        "targetDate": { date: {} },
+        "progress": { number: { format: "percent" } },
+        "status": { select: { options: [{ name: "Not Started", color: "gray" }, { name: "In Progress", color: "blue" }, { name: "Completed", color: "green" }] } }
+      }
+    });
+    console.log(✅ Goals created! ID: ${goalsDb.id});
