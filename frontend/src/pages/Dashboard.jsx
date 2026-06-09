@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import api from '../services/api';
+import { scheduleNotification } from '../services/notifications.js';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const today = () => new Date().toISOString().slice(0, 10);
@@ -267,6 +268,17 @@ const Dashboard = () => {
       const newTask = await api.createTask(data);
       setTasks(prev => [newTask, ...prev]);
       setShowQuickAdd(null);
+      // Schedule a native notification if the task has a start time
+      if (newTask.startTime) {
+        const date = newTask.dueDate?.start || newTask.dueDate || today();
+        scheduleNotification({
+          id: newTask.id,
+          title: `⏰ Task: ${newTask.title}`,
+          body: newTask.description || `Starting at ${newTask.startTime}`,
+          date,
+          time: newTask.startTime,
+        });
+      }
     } catch (err) { console.error(err); }
   };
 
@@ -275,6 +287,16 @@ const Dashboard = () => {
       const newHabit = await api.createHabit(data);
       setHabits(prev => [newHabit, ...prev]);
       setShowQuickAdd(null);
+      // Schedule a native notification if the habit has a start time
+      if (newHabit.startTime) {
+        scheduleNotification({
+          id: newHabit.id,
+          title: `🔥 Habit: ${newHabit.habitName}`,
+          body: `Time to do your ${newHabit.category || ''} habit! Starting at ${newHabit.startTime}`,
+          date: today(),
+          time: newHabit.startTime,
+        });
+      }
     } catch (err) { console.error(err); }
   };
 
