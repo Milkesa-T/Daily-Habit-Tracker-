@@ -8,29 +8,29 @@ let swRegistration = null;
 
 /** Register the service worker once at app startup */
 export async function registerServiceWorker() {
-  if (!('serviceWorker' in navigator)) {
-    console.warn('Service workers not supported in this browser.');
+  if (!("serviceWorker" in navigator)) {
+    console.warn("Service workers not supported in this browser.");
     return false;
   }
   try {
-    swRegistration = await navigator.serviceWorker.register('/sw.js');
-    console.log('✅ Service Worker registered:', swRegistration.scope);
+    swRegistration = await navigator.serviceWorker.register("/sw.js");
+    console.log("✅ Service Worker registered:", swRegistration.scope);
     return true;
   } catch (err) {
-    console.error('Service Worker registration failed:', err);
+    console.error("Service Worker registration failed:", err);
     return false;
   }
 }
 
 /** Request notification permission from the browser/OS */
 export async function requestNotificationPermission() {
-  if (!('Notification' in window)) return 'denied';
-  if (Notification.permission === 'granted') return 'granted';
+  if (!("Notification" in window)) return "denied";
+  if (Notification.permission === "granted") return "granted";
   const result = await Notification.requestPermission();
   return result;
 }
 
-const STORAGE_KEY = 'scheduled-notifications';
+const STORAGE_KEY = "scheduled-notifications";
 const activeTimers = new Map();
 
 function readScheduledNotifications() {
@@ -38,7 +38,7 @@ function readScheduledNotifications() {
     const rawValue = window.localStorage.getItem(STORAGE_KEY);
     return rawValue ? JSON.parse(rawValue) : {};
   } catch (error) {
-    console.warn('Unable to read scheduled notifications:', error);
+    console.warn("Unable to read scheduled notifications:", error);
     return {};
   }
 }
@@ -47,7 +47,7 @@ function writeScheduledNotifications(entries) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
   } catch (error) {
-    console.warn('Unable to persist scheduled notifications:', error);
+    console.warn("Unable to persist scheduled notifications:", error);
   }
 }
 
@@ -66,8 +66,8 @@ function removeScheduledNotification(id) {
 function showNativeNotification({ title, body, id }) {
   const options = {
     body,
-    icon: '/favicon.svg',
-    badge: '/favicon.svg',
+    icon: "/favicon.svg",
+    badge: "/favicon.svg",
     tag: String(id),
     renotify: true,
     requireInteraction: true,
@@ -112,7 +112,8 @@ function queueNotification(entry) {
 
 /** Restore any pending notifications after a reload */
 export function restoreScheduledNotifications() {
-  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!("Notification" in window) || Notification.permission !== "granted")
+    return;
 
   const entries = readScheduledNotifications();
   Object.values(entries).forEach((entry) => queueNotification(entry));
@@ -129,10 +130,10 @@ export function restoreScheduledNotifications() {
  */
 export function scheduleNotification({ id, title, body, date, time }) {
   if (!date || !time) return;
-  if (Notification.permission !== 'granted') return;
+  if (Notification.permission !== "granted") return;
 
   // Build a timestamp for today (or the given date) at the given time
-  const [hours, minutes] = time.split(':').map(Number);
+  const [hours, minutes] = time.split(":").map(Number);
   const scheduledDate = new Date(date);
   scheduledDate.setHours(hours, minutes, 0, 0);
   const scheduledAt = scheduledDate.getTime();
