@@ -5,6 +5,7 @@ import {
   CheckCircle,
   Clock,
   Compass,
+  Edit2,
   Flame,
   Plus,
   Repeat,
@@ -22,7 +23,10 @@ import {
   XAxis,
 } from "recharts";
 import api from "../services/api";
-import { scheduleNotification } from "../services/notifications.js";
+import {
+  cancelNotification,
+  scheduleNotification,
+} from "../services/notifications.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const today = () => new Date().toISOString().slice(0, 10);
@@ -224,17 +228,24 @@ const TaskQuickAdd = ({ onAdd }) => {
 };
 
 // ─── Habit Quick-Add Form ─────────────────────────────────────────────────────
-const HabitQuickAdd = ({ onAdd }) => {
-  const [form, setForm] = useState({
-    habitName: "",
-    category: "Coding",
-    customCategory: "",
-    frequency: "Daily",
-    customFrequency: "",
-    startTime: "",
-    endTime: "",
-  });
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+const HABIT_DEFAULTS = {
+  habitName: "",
+  category: "Coding",
+  customCategory: "",
+  frequency: "Daily",
+  customFrequency: "",
+  startTime: "",
+  endTime: "",
+};
+
+const HabitQuickAdd = ({
+  onSubmit,
+  initialHabit = null,
+  onCancel,
+  submitLabel = "Add Habit",
+  heading = "Add Habit",
+}) => {
+  const [form, setForm] = useState(HABIT_DEFAULTS);
   const categoryOptions = [
     "Coding",
     "Spiritual",
@@ -244,6 +255,36 @@ const HabitQuickAdd = ({ onAdd }) => {
     "Custom",
   ];
   const frequencyOptions = ["Daily", "Weekly", "Monthly", "Custom"];
+
+  useEffect(() => {
+    if (!initialHabit) {
+      setForm(HABIT_DEFAULTS);
+      return;
+    }
+
+    const habitCategory = initialHabit.category || "Coding";
+    const habitFrequency = initialHabit.frequency || "Daily";
+
+    setForm({
+      habitName: initialHabit.habitName || "",
+      category: categoryOptions.includes(habitCategory)
+        ? habitCategory
+        : "Custom",
+      customCategory: categoryOptions.includes(habitCategory)
+        ? ""
+        : habitCategory,
+      frequency: frequencyOptions.includes(habitFrequency)
+        ? habitFrequency
+        : "Custom",
+      customFrequency: frequencyOptions.includes(habitFrequency)
+        ? ""
+        : habitFrequency,
+      startTime: initialHabit.startTime || "",
+      endTime: initialHabit.endTime || "",
+    });
+  }, [initialHabit]);
+
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -257,7 +298,7 @@ const HabitQuickAdd = ({ onAdd }) => {
         : form.frequency;
     if (!category || !frequency) return;
 
-    onAdd({
+    onSubmit({
       habitName: form.habitName,
       category,
       frequency,
@@ -266,15 +307,6 @@ const HabitQuickAdd = ({ onAdd }) => {
       completed: false,
       streak: 0,
       isRoutine: false,
-    });
-    setForm({
-      habitName: "",
-      category: "Coding",
-      customCategory: "",
-      frequency: "Daily",
-      customFrequency: "",
-      startTime: "",
-      endTime: "",
     });
   };
 
@@ -288,6 +320,19 @@ const HabitQuickAdd = ({ onAdd }) => {
       onSubmit={handleSubmit}
       className="space-y-2.5 p-3 bg-white/5 rounded-xl border border-white/5"
     >
+      <div className="flex items-center justify-between gap-3">
+        <h4 className="text-sm font-semibold text-white">{heading}</h4>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-xs text-gray-400 hover:text-white transition-colors"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
+
       <input
         type="text"
         placeholder="Habit name..."
@@ -304,14 +349,14 @@ const HabitQuickAdd = ({ onAdd }) => {
           type="time"
           value={form.startTime}
           onChange={(e) => set("startTime", e.target.value)}
-          className={`${selectCls}`}
+          className={selectCls}
         />
         <span className="text-gray-500 text-xs">→</span>
         <input
           type="time"
           value={form.endTime}
           onChange={(e) => set("endTime", e.target.value)}
-          className={`${selectCls}`}
+          className={selectCls}
         />
       </div>
 
@@ -362,7 +407,7 @@ const HabitQuickAdd = ({ onAdd }) => {
         type="submit"
         className="w-full bg-[#10b981] hover:bg-[#059669] text-white py-2 rounded-lg text-xs font-semibold transition-colors"
       >
-        Add Habit
+        {submitLabel}
       </button>
     </form>
   );
@@ -509,6 +554,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   const [showQuickAdd, setShowQuickAdd] = useState(null);
+  const [editingHabit, setEditingHabit] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   const [taskFilter, setTaskFilter] = useState("All"); // All | Daily | Weekly | Monthly
 
@@ -560,8 +606,31 @@ const Dashboard = () => {
     }
   };
 
-  const addHabit = async (data) => {
+  const saveHabit = async (data) => {
     try {
+      if (editingHabit) {
+        const updatedHabit = await api.updateHabit(editingHabit.id, data);
+        setHabits((prev) =>
+          prev.map((habit) =>
+            habit.id === editingHabit.id ? updatedHabit : habit,
+          ),
+        );
+        setEditingHabit(null);
+        setShowQuickAdd(null);
+        if (updatedHabit.startTime) {
+          scheduleNotification({
+            id: updatedHabit.id,
+            title: `🔥 Habit: ${updatedHabit.habitName}`,
+            body: `Time to do your ${updatedHabit.category || ""} habit! Starting at ${updatedHabit.startTime}`,
+            date: today(),
+            time: updatedHabit.startTime,
+          });
+        } else {
+          cancelNotification(updatedHabit.id);
+        }
+        return;
+      }
+
       const newHabit = await api.createHabit(data);
       setHabits((prev) => [newHabit, ...prev]);
       setShowQuickAdd(null);
@@ -578,6 +647,22 @@ const Dashboard = () => {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const startHabitEdit = (habit) => {
+    setEditingHabit(habit);
+    setShowQuickAdd("habit");
+  };
+
+  const toggleHabitForm = () => {
+    if (showQuickAdd === "habit") {
+      setShowQuickAdd(null);
+      setEditingHabit(null);
+      return;
+    }
+
+    setEditingHabit(null);
+    setShowQuickAdd("habit");
   };
 
   const updateTaskStatus = async (taskId, newStatus) => {
@@ -630,6 +715,7 @@ const Dashboard = () => {
     try {
       await api.deleteHabit(id);
       setHabits((prev) => prev.filter((h) => h.id !== id));
+      cancelNotification(id);
     } catch (err) {
       console.error(err);
     }
@@ -899,9 +985,7 @@ const Dashboard = () => {
                 <Repeat size={10} /> Auto-reset daily
               </span>
               <button
-                onClick={() =>
-                  setShowQuickAdd(showQuickAdd === "habit" ? null : "habit")
-                }
+                onClick={toggleHabitForm}
                 className="p-1.5 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors border border-white/5"
               >
                 <Plus size={16} />
@@ -909,7 +993,18 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {showQuickAdd === "habit" && <HabitQuickAdd onAdd={addHabit} />}
+          {showQuickAdd === "habit" && (
+            <HabitQuickAdd
+              onSubmit={saveHabit}
+              initialHabit={editingHabit}
+              onCancel={() => {
+                setShowQuickAdd(null);
+                setEditingHabit(null);
+              }}
+              submitLabel={editingHabit ? "Save Changes" : "Add Habit"}
+              heading={editingHabit ? "Edit Habit" : "Add Habit"}
+            />
+          )}
 
           <div className="space-y-2">
             {habits.length === 0 ? (
@@ -949,6 +1044,16 @@ const Dashboard = () => {
                       </span>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-gray-400 shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startHabitEdit(habit);
+                        }}
+                        className="text-gray-500 hover:text-[#10b981] transition-colors p-1"
+                        title="Edit Habit"
+                      >
+                        <Edit2 size={14} />
+                      </button>
                       <Flame size={13} className="text-orange-500" />
                       <span className="font-semibold">{habit.streak || 0}</span>
                       <button
